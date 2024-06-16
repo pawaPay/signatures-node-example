@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "http-message-signatures": "^1.0.4"
+  }
+}
