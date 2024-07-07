@@ -1,39 +1,28 @@
 const {httpbis: {signMessage, verifyMessage, extractHeader}} = require('http-message-signatures');
 const {createHash, createPrivateKey, createSign, createPublicKey, createVerify} = require('crypto');
+const fs = require('fs');
 
 const AUTHORIZATION_TOKEN = 'Bearer !!! YOUR API TOKEN HERE !!!';
 const BASE_URL = 'https://api.sandbox.pawapay.cloud';
-
-// Sample private key. !!! Do not use in production !!!
-const PRIVATE_KEY_PEM = "-----BEGIN PRIVATE KEY-----\n" +
-    "MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQg6xLJedSK0wwJHZ46\n" +
-    "pRCDeTGfXkv1eO9n+4c9zHBgL0GgCgYIKoZIzj0DAQehRANCAAQj6hsJFcLHWrav\n" +
-    "JFY6cUKLPTCQb2gmwcjG6ZcRaIeW2jMrXu1UcSAbGswrCUyFUZW0Z9yVxMlpp2Yn\n" +
-    "flrCsQDn\n" +
-    "-----END PRIVATE KEY-----";
-
-// Should be added in customer panel with key id = 'CUSTOMER_TEST_KEY_ID'
-const PUBLIC_KEY_PEM = "-----BEGIN PUBLIC KEY-----\n" +
-    "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEI+obCRXCx1q2ryRWOnFCiz0wkG9o\n" +
-    "JsHIxumXEWiHltozK17tVHEgGxrMKwlMhVGVtGfclcTJaadmJ35awrEA5w==\n" +
-    "-----END PUBLIC KEY-----";
+const CUSTOMER_TEST_KEY_ID = 'CUSTOMER_TEST_KEY_ID';
 
 (async () => {
 
-    const privateKeyPem = createPrivateKey(PRIVATE_KEY_PEM);
+    const privateKeyPem = createPrivateKey(fs.readFileSync('./private-key.pem').toString());
     const request = depositRequest();
 
+    // prepare signed message
     const signedRequest = await signMessage({
-        key: ppSigner(privateKeyPem, 'ecdsa-p256-sha256', 'CUSTOMER_TEST_KEY_ID'),
-        name: 'sig-pp',
-        fields: ['@method', '@authority', '@path', 'signature-date', 'content-digest', 'content-type', 'content-length'],
+        key: ppSigner(privateKeyPem, 'ecdsa-p256-sha256', CUSTOMER_TEST_KEY_ID), // prepare signer with EC private key
+        name: 'sig-pp', // signature name supported by pawaPay API
+        fields: ['@method', '@authority', '@path', 'signature-date', 'content-digest', 'content-type', 'content-length'], // signature base components
     }, {
         method: 'POST',
         url: BASE_URL + '/deposits',
         headers: {
-            'Signature-Date': new Date().toISOString().toString(),
+            'Signature-Date': new Date().toISOString().toString(), // additional date header
             'Content-Type': 'application/json',
-            'Content-Digest': `sha-512=:${sha512Digest(request)}:`,
+            'Content-Digest': `sha-512=:${sha512Digest(request)}:`, // SHA-512 body content digest
             'Content-Length': request.length.toString(),
             'Authorization': AUTHORIZATION_TOKEN
         },
@@ -68,6 +57,7 @@ const PUBLIC_KEY_PEM = "-----BEGIN PUBLIC KEY-----\n" +
 
 })().catch(console.error);
 
+// create signer with previously generated private key
 function ppSigner(privateKey, algorithm, id) {
     return {
         id: id,
@@ -78,6 +68,7 @@ function ppSigner(privateKey, algorithm, id) {
     };
 }
 
+// create verifier with public key provided by pawaPay API
 function ppVerifier(publicKey) {
     return {
         async verify(data, signature) {
@@ -86,16 +77,19 @@ function ppVerifier(publicKey) {
     }
 }
 
+// SHA-512 digest generator
 function sha512Digest(data) {
     return createHash('sha512').update(data).digest('base64');
 }
 
+// SHA-512 digest verifier
 function verifyDigest(message) {
     const headerDigest = extractHeader('content-digest', new Map([['key', 'sha-512']]), message)[0].replaceAll(':', '');
     const calculatedDigest = sha512Digest(message.body);
     return headerDigest === calculatedDigest;
 }
 
+// method to fetch signature verification public key
 function getPublicKey(keyId) {
     let url = new URL(BASE_URL + '/public-key/http');
     return fetch(url, {method: 'GET', headers: {'Content-Type': 'application/json'}})
@@ -103,6 +97,7 @@ function getPublicKey(keyId) {
         .then(body => createPublicKey(body.find((element) => element.id = keyId).key));
 }
 
+// sample deposit request
 function depositRequest() {
     return `{
     "depositId": "${crypto.randomUUID()}",
