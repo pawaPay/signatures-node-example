@@ -1,0 +1,5 @@
+{
+  "baseUrl": "https://api.sandbox.pawapay.cloud",
+  "authToken": "Bearer !!! Your API token here !!!",
+  "keyId": "CUSTOMER_TEST_KEY_ID"
+}

@@ -1,10 +1,7 @@
 const {httpbis: {signMessage, verifyMessage, extractHeader}} = require('http-message-signatures');
 const {createHash, createPrivateKey, createSign, createPublicKey, createVerify} = require('crypto');
+const config = require('config');
 const fs = require('fs');
-
-const AUTHORIZATION_TOKEN = 'Bearer !!! YOUR API TOKEN HERE !!!';
-const BASE_URL = 'https://api.sandbox.pawapay.cloud';
-const CUSTOMER_TEST_KEY_ID = 'CUSTOMER_TEST_KEY_ID';
 
 (async () => {
 
@@ -13,18 +10,18 @@ const CUSTOMER_TEST_KEY_ID = 'CUSTOMER_TEST_KEY_ID';
 
     // prepare signed message
     const signedRequest = await signMessage({
-        key: ppSigner(privateKeyPem, 'ecdsa-p256-sha256', CUSTOMER_TEST_KEY_ID), // prepare signer with EC private key
+        key: ppSigner(privateKeyPem, 'ecdsa-p256-sha256', config.get('keyId')), // prepare signer with EC private key
         name: 'sig-pp', // signature name supported by pawaPay API
         fields: ['@method', '@authority', '@path', 'signature-date', 'content-digest', 'content-type', 'content-length'], // signature base components
     }, {
         method: 'POST',
-        url: BASE_URL + '/deposits',
+        url: config.get('baseUrl') + '/deposits',
         headers: {
             'Signature-Date': new Date().toISOString().toString(), // additional date header
             'Content-Type': 'application/json',
             'Content-Digest': `sha-512=:${sha512Digest(request)}:`, // SHA-512 body content digest
             'Content-Length': request.length.toString(),
-            'Authorization': AUTHORIZATION_TOKEN
+            'Authorization': config.get('authToken')
         },
         body: request,
     });
