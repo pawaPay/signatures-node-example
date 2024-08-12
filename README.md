@@ -6,6 +6,8 @@ $ openssl ecparam -name P-256 -genkey -noout -out private-key.pem
 $ openssl ec -in private-key.pem -pubout -out public-key.pem
 ```
 and copy to `src/test/resources`
+
+
 2. Upload generated public key in the customer dashboard `System Configuration/API Tokens/Sequrity` and update `keyId` in `config/default.json` according to Key ID in dashboard.
 
 
