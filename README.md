@@ -9,7 +9,7 @@ and copy to the root folder. You can use the sample ones already there also.
 
 2. Add the generated public key to your pawaPay account. Read how to do that from [our docs](https://pawapay.document360.io/docs/api-token#signed-requests).
 
-3. Generate API Token in the pawaPay dashboard. Read how to do that [from our docs](https://pawapay.document360.io/docs/api-token#generating-an-api-token).
+3. Generate API Token in the pawaPay dashboard. Read how to do that from [our docs](https://pawapay.document360.io/docs/api-token#generating-an-api-token).
 4. Update `authToken` in `config/default.json` with the API token you just generated.
 5. Make sure you have http-message-signatures installed.
 ```
