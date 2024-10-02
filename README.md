@@ -18,6 +18,6 @@ $ npm install http-message-signatures
 
 6. Execute 
 ```
-$ node signed-deposit-example.js`
+$ node signed-deposit-example.js
 ```
 7. You will see the request and response payloads and whether signature and content digest are valid from the output.
