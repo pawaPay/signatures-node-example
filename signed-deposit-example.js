@@ -21,7 +21,7 @@ const fs = require('fs');
             'Content-Type': 'application/json',
             'Content-Digest': `sha-512=:${sha512Digest(request)}:`, // SHA-512 body content digest
             'Content-Length': request.length.toString(),
-            'Authorization': config.get('authToken')
+            'Authorization': 'Bearer ' + config.get('authToken')
         },
         body: request,
     });
@@ -88,7 +88,7 @@ function verifyDigest(message) {
 
 // method to fetch signature verification public key
 function getPublicKey(keyId) {
-    let url = new URL(BASE_URL + '/public-key/http');
+    let url = new URL(config.get('baseUrl') + '/public-key/http');
     return fetch(url, {method: 'GET', headers: {'Content-Type': 'application/json'}})
         .then(response => response.json())
         .then(body => createPublicKey(body.find((element) => element.id = keyId).key));
